@@ -1,19 +1,34 @@
 const express = require('express');
 const app = express();
+const dotenv = require('dotenv');
 const mongoose = require('mongoose');
-
+// Import Routes
+const authRoute = require('./routes/auth');
+dotenv.config();
 
 // Connect to DB
+// process.env.DB_CONNECT
 mongoose.connect(
-  'mongodb+srv://admin:uKUXpq6pJr0Fukrj@cluster0.zpx86.mongodb.net/myFirstDatabase?retryWrites=true&w=majority',
+  process.env.DB_CONNECT,
   { 
     useUnifiedTopology: true,
     useNewUrlParser: true
   },
-  () => console.log('connected to mongoDB'));
+  function (err) {
+    try {
+      console.log('Successfully linked');
+    } catch (error) {
+      console.log(error);
+    }
+  }
+);
 
-// Import Routes
-const authRoute = require('./routes/auth');
+
+
+
+// Middleware
+app.use(express.json());
+
 
 
 // Route Middlewares
