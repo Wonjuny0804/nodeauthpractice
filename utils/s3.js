@@ -1,6 +1,12 @@
 require('dotenv').config();
 const fs = require('fs');
-const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const { 
+  S3Client, 
+  PutObjectCommand, 
+  GetObjectCommand, 
+  DeleteObjectCommand, 
+} = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { AWS_BUCKET_NAME, AWS_BUCKET_REGION, S3_ACCESS_KEY, S3_SECRET_ACCESS_KEY } = process.env;
 
 const s3 = new S3Client({ 
@@ -16,7 +22,8 @@ const uploadFile = async file => {
   const uploadParams = {
     Bucket: AWS_BUCKET_NAME,
     Body: fileStream,
-    Key: file.filename
+    Key: file.filename,
+    ContentType: 'image/jpeg'
   }
 
   try {
@@ -38,13 +45,27 @@ const downloadFile = async fileKey => {
     Key: fileKey
   }
 
+  // Create a presigned URL
   try {
-    const data = await s3.send(new GetObjectCommand(downloadParams));
-    console.log('Success, bucket returned');
-    return data;
+    const command = new GetObjectCommand(downloadParams);
+
+    // Create the presigned URL
+    const signedURL = await getSignedUrl(s3, command, {
+      expiresIn: 3600,
+    });
+    // console.log(signedURL);
+    return signedURL;
   } catch (err) {
-    console.log("Error", err);
+    console.log(err);
   }
+
+  // try {
+  //   const data = await s3.send(new GetObjectCommand(downloadParams));
+  //   console.log('Success, bucket returned');
+  //   return data;
+  // } catch (err) {
+  //   console.log("Error", err);
+  // }
 }
 
 module.exports.uploadFile = uploadFile;
